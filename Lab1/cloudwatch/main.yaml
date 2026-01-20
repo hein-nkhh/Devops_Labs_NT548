@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Root Stack for Devops Lab 1
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: lab-key
+  S3BucketURL:
+    Type: String
+    Description: URL của S3 bucket chứa các file yaml (ví dụ https://lab1-nt548-cfn-nhom17.s3.us-east-1.amazonaws.com)
+
+Resources:
+  NetworkStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${S3BucketURL}/network.yaml"
+      Parameters:
+        VPCCidr: "10.0.0.0/16"
+        PublicSubnetCidr: "10.0.1.0/24"
+        PrivateSubnetCidr: "10.0.2.0/24"
+
+  SecurityStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${S3BucketURL}/security.yaml"
+      Parameters:
+        VpcId: !GetAtt NetworkStack.Outputs.VpcId
+
+  ComputeStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${S3BucketURL}/compute.yaml"
+      Parameters:
+        PublicSubnetId: !GetAtt NetworkStack.Outputs.PublicSubnetId
+        PrivateSubnetId: !GetAtt NetworkStack.Outputs.PrivateSubnetId
+        PublicSGId: !GetAtt SecurityStack.Outputs.PublicSGId
+        PrivateSGId: !GetAtt SecurityStack.Outputs.PrivateSGId
+        KeyName: !Ref KeyName
+
+Outputs:
+  PublicIP:
+    Value: !GetAtt ComputeStack.Outputs.PublicInstanceIP
+  PrivateIP:
+    Value: !GetAtt ComputeStack.Outputs.PrivateInstanceIP

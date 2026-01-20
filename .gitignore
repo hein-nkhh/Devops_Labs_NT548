@@ -35,3 +35,8 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+*.pem
+
+hoangpdh_devops_accessKeys.csv
+hoangpdh_devops_credentials.csv
